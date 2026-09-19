@@ -1,0 +1,144 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'internetisalie/opencode-pty-bridge' &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'master' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Verify release commit and package metadata
+        id: release
+        env:
+          RELEASE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin master --tags --force
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/master
+
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$PACKAGE_NAME" != '@internetisalie/opencode-pty-bridge' ]; then
+            echo "Unexpected package name: $PACKAGE_NAME" >&2
+            exit 1
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid package version: $VERSION" >&2
+            exit 1
+          fi
+
+          echo "name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$RELEASE_SHA" >> "$GITHUB_OUTPUT"
+          if git rev-parse --verify --quiet "refs/tags/v$VERSION" >/dev/null; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Bun
+        if: steps.release.outputs.needed == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.8
+
+      - name: Setup Node for GitHub Packages
+        if: steps.release.outputs.needed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@internetisalie'
+
+      - name: Install dependencies
+        if: steps.release.outputs.needed == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun install --frozen-lockfile
+
+      - name: Check whether package version exists
+        if: steps.release.outputs.needed == 'true'
+        id: package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if npm view "${{ steps.release.outputs.name }}@${{ steps.release.outputs.version }}" version \
+            --registry https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to GitHub Packages
+        if: steps.release.outputs.needed == 'true' && steps.package.outputs.exists == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --registry https://npm.pkg.github.com
+
+      - name: Generate release notes
+        if: steps.release.outputs.needed == 'true'
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.release.outputs.version }}"
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log --no-merges --pretty=format:'- %s (%h)' "$LAST_TAG..HEAD")
+          else
+            CHANGELOG=$(git log --no-merges --pretty=format:'- %s (%h)')
+          fi
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG='- No user-facing changes'
+          fi
+
+          {
+            echo "## Release v${VERSION}"
+            echo
+            printf '%s\n' "$CHANGELOG"
+            echo
+            echo '### Installation'
+            echo
+            echo 'Configure the `@internetisalie` scope for `https://npm.pkg.github.com`, then add this to `opencode.json`:'
+            echo
+            printf '%s\n' '```json'
+            printf '%s\n' '{'
+            printf '%s\n' '  "$schema": "https://opencode.ai/config.json",'
+            printf '%s\n' '  "plugin": ["@internetisalie/opencode-pty-bridge@0.1.0"]'
+            printf '%s\n' '}'
+            printf '%s\n' '```'
+          } > .release-notes.md
+
+      - name: Create GitHub release and tag
+        if: steps.release.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          gh release create "v${{ steps.release.outputs.version }}"
+          --repo "$GITHUB_REPOSITORY"
+          --target "${{ steps.release.outputs.sha }}"
+          --title "v${{ steps.release.outputs.version }}"
+          --notes-file .release-notes.md

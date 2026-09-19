@@ -1,8 +1,8 @@
-import { manager } from "opencode-pty/plugin/pty/manager"
+import { manager } from "@internetisalie/opencode-pty/plugin/pty/manager"
 import { OutputStore } from "./output-store.js"
 
 const SCHEMA_VERSION = 1
-const OPENCODE_PTY_VERSION = "0.4.0"
+const OPENCODE_PTY_VERSION = "0.4.1"
 const OUTPUT_PATH = /^\/sessions\/([^/]+)\/output$/
 
 export type BridgeState = {

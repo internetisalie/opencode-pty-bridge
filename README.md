@@ -1,19 +1,26 @@
-# opencode-pty-bridge
+# @internetisalie/opencode-pty-bridge
 
-Wraps [`opencode-pty`](https://github.com/shekohex/opencode-pty) and exposes its
+Wraps [`@internetisalie/opencode-pty`](https://github.com/internetisalie/opencode-pty) and exposes its
 sessions read-only over OpenCode's authenticated plugin HTTP routes, so a UI
 (e.g. OpenChamber) can observe PTY sessions through the OpenCode server it is
 already talking to — no separate listener, port, or callback token.
 
 ## Install
 
+Configure npm for GitHub Packages and provide a token with `read:packages`:
+
+```ini
+@internetisalie:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+```
+
 ```json
 {
-  "plugin": ["opencode-pty-bridge"]
+  "plugin": ["@internetisalie/opencode-pty-bridge@0.1.0"]
 }
 ```
 
-Do not also list `opencode-pty` — the bridge registers its tools for you.
+Do not also list `@internetisalie/opencode-pty` - the bridge registers its tools for you.
 Loading both registers duplicate `pty_*` tool IDs.
 
 Requires an OpenCode server with plugin HTTP routes (`opencode >=1.18.31`).

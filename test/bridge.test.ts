@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from "bun:test"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
-import { manager, rawOutputCallbacks, sessionUpdateCallbacks } from "opencode-pty/plugin/pty/manager"
+import {
+  manager,
+  rawOutputCallbacks,
+  sessionUpdateCallbacks,
+} from "@internetisalie/opencode-pty/plugin/pty/manager"
 import plugin from "../src/index.ts"
 
 function buildInput(): PluginInput {
@@ -58,7 +62,7 @@ describe("opencode-pty-bridge", () => {
     expect(await response.json()).toEqual({
       id: "opencode-pty-bridge",
       schemaVersion: 1,
-      opencodePtyVersion: "0.4.0",
+      opencodePtyVersion: "0.4.1",
     })
   })
 

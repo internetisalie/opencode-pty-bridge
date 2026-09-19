@@ -1,12 +1,12 @@
 import type { PluginModule } from "@opencode-ai/plugin"
-import { PTYPlugin } from "opencode-pty"
+import { PTYPlugin } from "@internetisalie/opencode-pty"
 import {
   registerRawOutputCallback,
   registerSessionUpdateCallback,
   removeRawOutputCallback,
   removeSessionUpdateCallback,
-} from "opencode-pty/plugin/pty/manager"
-import type { PTYSessionInfo } from "opencode-pty/plugin/pty/types"
+} from "@internetisalie/opencode-pty/plugin/pty/manager"
+import type { PTYSessionInfo } from "@internetisalie/opencode-pty/plugin/pty/types"
 import { createFetchHandler, type BridgeState } from "./http.js"
 import { OutputStore } from "./output-store.js"
 

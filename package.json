@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "opencode-pty-bridge",
+  "name": "@internetisalie/opencode-pty-bridge",
   "version": "0.1.0",
   "description": "Read-only HTTP bridge exposing opencode-pty sessions through OpenCode's authenticated plugin HTTP routes",
-  "author": "",
+  "author": "internetisalie",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -11,6 +11,17 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/internetisalie/opencode-pty-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/internetisalie/opencode-pty-bridge/issues"
+  },
+  "homepage": "https://github.com/internetisalie/opencode-pty-bridge#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -31,7 +42,7 @@
     "prepack": "bun run build"
   },
   "dependencies": {
-    "opencode-pty": "0.4.0"
+    "@internetisalie/opencode-pty": "0.4.1"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "1.18.31",
