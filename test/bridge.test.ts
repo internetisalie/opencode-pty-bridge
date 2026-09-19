@@ -76,11 +76,19 @@ describe("opencode-pty-bridge", () => {
     await waitFor(() => manager.get(exited.id)?.status === "exited")
 
     const response = await fetchOf(hooks)(new Request("http://bridge.local/sessions"))
-    const body = (await response.json()) as { sessions: Array<{ id: string; status: string }> }
+    const body = (await response.json()) as {
+      sessions: Array<{ id: string; parentSessionId: string; status: string }>
+    }
 
-    const byId = new Map(body.sessions.map((s) => [s.id, s.status]))
-    expect(byId.get(running.id)).toBe("running")
-    expect(byId.get(exited.id)).toBe("exited")
+    const byId = new Map(body.sessions.map((session) => [session.id, session]))
+    expect(byId.get(running.id)).toMatchObject({
+      parentSessionId: "test-parent",
+      status: "running",
+    })
+    expect(byId.get(exited.id)).toMatchObject({
+      parentSessionId: "test-parent",
+      status: "exited",
+    })
 
     manager.kill(running.id, true)
   })
