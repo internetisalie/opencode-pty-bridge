@@ -118,7 +118,10 @@ export function createV2Bridge(options: Options) {
       const current = outputs.get(id)
       const revision = current?.text === snapshot.data.text ? current.revision : (current?.revision ?? 0) + 1
       outputs.set(id, { revision, text: snapshot.data.text })
-      return json({ schemaVersion, revision, reset: true, data: snapshot.data.text })
+      // Snapshot text contains physical rows separated by LF, rather than raw
+      // PTY bytes. Terminal renderers need CR+LF to start each row at column zero.
+      const data = snapshot.data.text.replace(/\r?\n/g, '\r\n')
+      return json({ schemaVersion, revision, reset: true, data })
     } catch {
       // A failed scan must not masquerade as an authoritative empty list.
       return json({ error: 'PTY bridge backend unavailable' }, 503)

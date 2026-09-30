@@ -14,7 +14,7 @@ test('v2 bridge lists native PTYs and returns a resettable read-only snapshot', 
       }] })
     }
     if (path === '/api/experimental/persistent-pty/pty_one/snapshot') {
-      return Response.json({ data: { info: { id: 'pty_one' }, text: 'ready\n' } })
+      return Response.json({ data: { info: { id: 'pty_one' }, text: 'ready\nnext row\r\nlast row' } })
     }
     throw new Error(`Unexpected ${path}`)
   }
@@ -26,7 +26,7 @@ test('v2 bridge lists native PTYs and returns a resettable read-only snapshot', 
   expect(snapshot.sessions).toMatchObject([{ id: 'pty_one', parentSessionId: 'ses_one', status: 'running' }])
   expect(snapshot.sessions[0].createdAt).toBeString()
   const output = await bridge(new Request('http://bridge/sessions/pty_one/output'))
-  expect(await output.json()).toMatchObject({ schemaVersion: 1, reset: true, data: 'ready\n' })
+  expect(await output.json()).toMatchObject({ schemaVersion: 1, reset: true, data: 'ready\r\nnext row\r\nlast row' })
   expect(requests).toContain('/api/experimental/session/ses_one/terminal')
 })
 
