@@ -37,6 +37,32 @@ Loading both registers duplicate `pty_*` tool IDs.
 
 Requires an OpenCode server with plugin HTTP routes (`opencode >=1.18.31`).
 
+## OpenCode v2
+
+The v1 entry point above uses the old `opencode-pty` manager. OpenCode v2 instead
+uses native persistent PTYs. Install the `./v2` export alongside the v2 PTY
+tool plugin and point both at the same OpenCode server:
+
+```json
+{
+  "plugins": [
+    {
+      "package": "/path/to/opencode-pty-bridge-v2",
+      "options": { "serverUrl": "http://127.0.0.1:4097" }
+    }
+  ]
+}
+```
+
+The package directory must expose the compiled `./v2` entry point from
+`server.js`. The adapter uses `OPENCODE_SERVER_PASSWORD` for its read-only
+loopback requests, or `serverPassword` in plugin options. It preserves the
+existing OpenChamber bridge routes and response schema. V2 output is a rendered
+PTY snapshot, returned as a full reset on each poll; it is not the v1 raw byte
+stream. V2 does not provide `notifyOnExit` or `timeoutSeconds`, so those fields
+are reported as false and absent. A backend failure returns 503 rather than an
+empty session list.
+
 ## HTTP API
 
 All routes are served under `/api/plugins/opencode-pty-bridge` and require
