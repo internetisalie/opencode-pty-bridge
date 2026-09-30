@@ -20,11 +20,14 @@ test('v2 bridge lists native PTYs and returns a resettable read-only snapshot', 
   }
   const bridge = createV2Bridge({ serverUrl: 'http://127.0.0.1:4097', fetch: fetcher })
   const capability = await bridge(new Request('http://bridge/'))
-  expect((await capability.json()).id).toBe('opencode-pty-bridge')
+  expect(await capability.json()).toMatchObject({ id: 'opencode-pty-bridge' })
   const list = await bridge(new Request('http://bridge/sessions'))
   const snapshot = await list.json()
-  expect(snapshot.sessions).toMatchObject([{ id: 'pty_one', parentSessionId: 'ses_one', status: 'running' }])
-  expect(snapshot.sessions[0].createdAt).toBeString()
+  expect(snapshot).toMatchObject({
+    sessions: [{
+      id: 'pty_one', parentSessionId: 'ses_one', status: 'running', createdAt: expect.any(String),
+    }],
+  })
   const output = await bridge(new Request('http://bridge/sessions/pty_one/output'))
   expect(await output.json()).toMatchObject({ schemaVersion: 1, reset: true, data: 'ready\r\nnext row\r\nlast row' })
   expect(requests).toContain('/api/experimental/session/ses_one/terminal')
