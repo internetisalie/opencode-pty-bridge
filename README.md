@@ -59,7 +59,8 @@ The package directory must expose the compiled `./v2` entry point from
 loopback requests, or `serverPassword` in plugin options. It preserves the
 existing OpenChamber bridge routes and response schema. V2 output is a rendered
 PTY snapshot, returned as a full reset on each poll; it is not the v1 raw byte
-stream. V2 does not provide `notifyOnExit` or `timeoutSeconds`, so those fields
+stream. A scoped list uses one native session request instead of enumerating
+every OpenCode session. V2 does not provide `notifyOnExit` or `timeoutSeconds`, so those fields
 are reported as false and absent. A backend failure returns 503 rather than an
 empty session list.
 
@@ -70,7 +71,9 @@ normal OpenCode authentication. There is no write surface: spawning, input,
 resize, kill, and cleanup remain tool-only.
 
 - `GET /` — capability probe. `404` means the bridge isn't installed.
-- `GET /sessions` — current PTY sessions (running and exited).
+- `GET /sessions` — current PTY sessions (running and exited). The v2 adapter
+  accepts `?parentSessionId=<OpenCode session ID>` to request only that session's
+  PTYs. An empty filter returns 400; omitting it preserves the global list.
 - `GET /sessions/:id/output?after=<revision>` — raw output, either a full
   snapshot (`reset: true`) or the bytes appended since `after`. Retained
   output is bounded to 512 KiB per session.
