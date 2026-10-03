@@ -127,9 +127,11 @@ jobs:
             printf '%s\n' '```json'
             printf '%s\n' '{'
             printf '%s\n' '  "$schema": "https://opencode.ai/config.json",'
-            printf '%s\n' '  "plugin": ["@internetisalie/opencode-pty-bridge@0.1.0"]'
+            printf '  "plugin": ["@internetisalie/opencode-pty-bridge@%s"]\n' "$VERSION"
             printf '%s\n' '}'
             printf '%s\n' '```'
+            echo
+            echo 'For OpenCode v2, use the compiled `./v2` export as described in the README. This release adds session-scoped native PTY inventory for OpenChamber.'
           } > .release-notes.md
 
       - name: Create GitHub release and tag

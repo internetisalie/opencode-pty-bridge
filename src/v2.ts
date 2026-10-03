@@ -44,12 +44,16 @@ function server(options: Options) {
 
 export function createV2Bridge(options: Options) {
   const get = server(options)
-  const created = new Map<string, string>()
+  const created = new Map<string, { createdAt: string; sessionID: string }>()
   let sessionsRevision = 0
   let sessionsSignature = ''
   const outputs = new Map<string, { revision: number; text: string }>()
 
-  const terminals = async () => {
+  const terminals = async (parentSessionId?: string) => {
+    if (parentSessionId !== undefined) {
+      const result = await get<{ data: NativePty[] }>(`api/experimental/session/${encodeURIComponent(parentSessionId)}/terminal`)
+      return result.data
+    }
     const sessions: string[] = []
     let cursor: string | undefined
     for (let page = 0; page < 1000; page++) {
@@ -72,16 +76,19 @@ export function createV2Bridge(options: Options) {
     return found
   }
 
-  const list = async () => {
-    const items = await terminals()
+  const list = async (parentSessionId?: string) => {
+    const items = await terminals(parentSessionId)
     const signature = JSON.stringify(items)
     if (signature !== sessionsSignature) {
       sessionsSignature = signature
       sessionsRevision++
     }
     const now = new Date().toISOString()
-    for (const item of items) if (!created.has(item.id)) created.set(item.id, now)
-    for (const id of created.keys()) if (!items.some((item) => item.id === id)) created.delete(id)
+    for (const item of items) if (!created.has(item.id)) created.set(item.id, { createdAt: now, sessionID: item.sessionID })
+    const ids = new Set(items.map((item) => item.id))
+    for (const [id, entry] of created) {
+      if ((parentSessionId === undefined || entry.sessionID === parentSessionId) && !ids.has(id)) created.delete(id)
+    }
     return {
       schemaVersion,
       revision: sessionsRevision,
@@ -97,7 +104,7 @@ export function createV2Bridge(options: Options) {
         timedOut: false,
         ...(item.exitCode === undefined ? {} : { exitCode: item.exitCode }),
         pid: item.pid,
-        createdAt: created.get(item.id),
+        createdAt: created.get(item.id)?.createdAt,
         lineCount: 0,
       })),
     }
@@ -108,7 +115,11 @@ export function createV2Bridge(options: Options) {
     const url = new URL(request.url)
     try {
       if (url.pathname === '/') return json({ id: 'opencode-pty-bridge', schemaVersion, opencodePtyVersion: '0.5.0' })
-      if (url.pathname === '/sessions') return json(await list())
+      if (url.pathname === '/sessions') {
+        const parentSessionId = url.searchParams.get('parentSessionId')
+        if (parentSessionId !== null && !parentSessionId.trim()) return json({ error: 'parentSessionId must not be empty' }, 400)
+        return json(await list(parentSessionId ?? undefined))
+      }
       const match = outputPath.exec(url.pathname)
       if (!match) return json({ error: 'Not found' }, 404)
       const id = match[1]!
