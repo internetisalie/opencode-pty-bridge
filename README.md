@@ -18,7 +18,7 @@ Use a `read:packages` token only for the one-shot install:
 
 ```bash
 NODE_AUTH_TOKEN="$(gh auth token)" \
-  opencode-internetisalie plugin @internetisalie/opencode-pty-bridge@0.1.0 --global
+  opencode-internetisalie plugin @internetisalie/opencode-pty-bridge@0.1.1 --global
 ```
 
 Do not pass `NODE_AUTH_TOKEN` to a long-running OpenCode process or service;
@@ -28,7 +28,7 @@ is:
 
 ```json
 {
-  "plugin": ["@internetisalie/opencode-pty-bridge@0.1.0"]
+  "plugin": ["@internetisalie/opencode-pty-bridge@0.1.1"]
 }
 ```
 

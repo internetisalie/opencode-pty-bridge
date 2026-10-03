@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@internetisalie/opencode-pty-bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only HTTP bridge exposing opencode-pty sessions through OpenCode's authenticated plugin HTTP routes",
   "author": "internetisalie",
   "license": "MIT",
