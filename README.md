@@ -77,3 +77,33 @@ resize, kill, and cleanup remain tool-only.
 - `GET /sessions/:id/output?after=<revision>` — raw output, either a full
   snapshot (`reset: true`) or the bytes appended since `after`. Retained
   output is bounded to 512 KiB per session.
+
+## Release image
+
+The OpenCode v2 payload is published as an OCI image,
+`ghcr.io/internetisalie/opencode-pty-bridge:<release-tag>`, built from
+`Containerfile.payload`: `server.js` (the bundled `src/v2.ts`) and a
+`package.json` of exactly `{"type":"module","main":"server.js"}` at the image
+root, linux/amd64, with source, revision, version and title labels. The npm
+publication workflows are independent of it.
+
+A release tag is `v<major>.<minor>.<patch>-internetisalie.<n>`, where
+`<major>.<minor>.<patch>` is the upstream version the payload is built from and
+`<n>` is a positive integer, with no leading zero, not yet used by any tag of this
+repository or any image tag in the registry. `.0`, a bare `vX.Y.Z`, `-poc.N`
+and `-rc.N` are not release tags. The first release is
+`v0.1.1-internetisalie.1`. Package metadata versions are not changed to release
+an image.
+
+To release, merge the change with CI green, then push the tag at the merged
+commit:
+
+```bash
+git tag v0.1.1-internetisalie.1 <merged-commit>
+git push origin v0.1.1-internetisalie.1
+```
+
+The `payload image` workflow refuses a tag outside that grammar and refuses a
+tag whose image already exists, then pushes only that tag: no `latest`, no
+sha tag. To correct a published image, release a new version. Pull requests
+build the image without pushing it.
