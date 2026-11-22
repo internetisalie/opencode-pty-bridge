@@ -88,7 +88,7 @@ root, linux/amd64, with source, revision, version and title labels. The npm
 publication workflows are independent of it.
 
 A release tag is `v<major>.<minor>.<patch>-internetisalie.<n>`, where
-`<major>.<minor>.<patch>` is the upstream version the payload is built from and
+`<major>.<minor>.<patch>` is the package's own version (`0.1.1` for the first release) and
 `<n>` is a positive integer, with no leading zero, not yet used by any tag of this
 repository or any image tag in the registry. `.0`, a bare `vX.Y.Z`, `-poc.N`
 and `-rc.N` are not release tags. The first release is
